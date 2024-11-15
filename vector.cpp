@@ -114,7 +114,7 @@ public:
 
 	void insert(int pos, T val) {
 		if (pos > m_size) {
-			throw std::out_of_range("Vector is empty");
+			throw std::out_of_range("index out of range");
 		}
 		
 		if (m_size == m_capacity) {
@@ -132,7 +132,7 @@ public:
 
 	void erase(int pos) {
 		if (pos > m_size) {
-			throw std::out_of_range("Vector is empty");
+			throw std::out_of_range("index out of range");
 		}
 
 		// Сдвигаем элементы влево до
