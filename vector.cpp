@@ -18,6 +18,14 @@ public:
 			data[i] = default_value;
 		}
 	}
+	/* Конструктор при переданном списке инициализации */
+	Vector(std::initializer_list<T>init) : data(new T[init.size()]), m_size(init.size()), m_capacity(init.size()) {
+		int index = 0;
+		for (const T& elem : init) {
+			data[index] = elem;
+			++index;
+		}
+	};
 	/* Метод для выделения памяти */
 	void reserve(size_t capacity) {
 		if (capacity <= m_capacity) return;
@@ -33,20 +41,29 @@ public:
 	};
 	/* Метод для ресайза */
 	void resize(size_t size, T val) {
-		if (size < m_size) {
-			m_size = size;
-		}
-		else if (size == m_size) {
-			return;
-		}
-		else {
+		
+		if (size > m_size) {
 			reserve(size);
-			for (int i = m_size; i < size; ++i) {
-				data[i] = val;
-			}
-			m_size = size;
 		}
+
+		for (int i = m_size; i < size; ++i) {
+			data[i] = val;
+		}
+		m_size = size;
 	};
+
+	void shrink_to_fit() {
+		if (m_capacity == m_size) return;
+
+		T* newData = new T[m_size];
+		for (int i = 0; i < m_size; ++i) {
+			newData[i] = data[i];
+		}
+
+		delete[] data;
+		data = newData;
+		m_capacity = m_size;
+	}
 
 	int size() const {
 		return m_size;
