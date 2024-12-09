@@ -1,4 +1,6 @@
 #include <iostream>
+#include <queue>
+#include <stdexcept> // Для обработки ошибок
 
 template <typename T>
 struct Node
@@ -13,7 +15,7 @@ struct Node
 template <typename T>
 class Queue {
 public:
-    Queue() : _first(nullptr), _size(0) {}
+    Queue() : _first(nullptr), _last(nullptr), _size(0) {}
 
     ~Queue() {
         while (!empty()) {
@@ -28,27 +30,38 @@ public:
     size_t size() const {
         return _size;
     }
+    /* 
+        stl очередь позволяет мутировать элементы, полученные через front() || back()
+        поэтому в текущей реализации методы также не константные
+    */
+    T& front() {
+        if (empty()) throw std::underflow_error("Queue is empty");
+        return _first->data;
+    }
+
+    T& back() {
+        if (empty()) throw std::underflow_error("Queue is empty");
+        return _last->data;
+    }
 
     void push(T value) {
         Node<T>* newNode = new Node<T>(value);
 
         if (empty()) {
             _first = newNode;
+            _last = newNode;
+        }
+        else if (_size == 1) {
+            _last = newNode;
+            _first->next = _last;
         }
         else {
-            /* для получения последнего эл-та перед вставляемым */
-            Node<T>* last = _first;
-            for (int i = 0; i < _size - 1; ++i) {
-                last = last->next;
-            }
-
-            last->next = newNode;
+            _last->next = newNode;
         }
 
         ++_size;
     }
 
-    /* нужно удалить самый первый эл-т, т.е. _first */
     void pop() {
         Node<T>* newFirst = _first->next;
         delete _first;
@@ -69,19 +82,7 @@ public:
 
 private:
     Node<T>* _first;
+    Node<T>* _last;
     size_t _size;
 };
-
-int main()
-{
-    Queue<int>q;
-    q.push(1);
-    q.push(2);
-    q.push(3);
-    q.print(); // 1, 2, 3
-
-    q.pop();
-    q.pop();
-    q.print(); // 3
-}
 
