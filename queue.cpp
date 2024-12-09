@@ -35,9 +35,6 @@ public:
         if (empty()) {
             _first = newNode;
         }
-        else if (_size == 1) {
-            _first->next = newNode;
-        }
         else {
             /* для получения последнего эл-та перед вставляемым */
             Node<T>* last = _first;
