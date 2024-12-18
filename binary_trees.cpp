@@ -1,4 +1,5 @@
 #include <iostream>
+#include <stdexcept>
 
 template <typename T>
 struct Node {
@@ -27,10 +28,14 @@ public:
         }
     }
 
-    void print() {
-        std::cout << "Root elem " << _root->_key << "\n";
-        std::cout << "Left " << _root->_left->_key << "\n";
-        std::cout << "Right " << _root->_right->_key << "\n";
+    Node<T>* find(T key) {
+        Node<T>* res = findNode(key, _root);
+        if (res) {
+            return res;
+        }
+        else {
+            throw std::runtime_error("Node not found");
+        }
     }
 
 private:
@@ -60,6 +65,18 @@ private:
         }
     }
 
+    Node<T>* findNode(T key, Node<T>* parent) {
+        if (key == parent->_key) {
+            return parent;
+        }
+        else if (key <= parent->_key) {
+            return findNode(key, parent->_left);
+        }
+        else {
+            return findNode(key, parent->_right);
+        }
+    }
+
     void Destroy(Node<T>* node) {
         if (node) {
             Destroy(node->_left);
@@ -80,7 +97,8 @@ int main()
     binary_tree.insert(5);
     binary_tree.insert(12);
 
-    binary_tree.print();
+    Node<int>*node = binary_tree.find(5);
+    std::cout << node->_key;
 
     return 0;
 }
