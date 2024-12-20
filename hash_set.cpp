@@ -16,7 +16,7 @@ struct Node {
 };
 
 class HashSet {
-public:\
+public:
     /* по дефолту память выделена под 5 элементов, при нехватке памяти, память будет увеличиваться вдвое в методе realloc() */
     HashSet() : _capacity(5), _array(_capacity, nullptr), _size(0) {}
 
