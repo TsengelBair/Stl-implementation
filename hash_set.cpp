@@ -2,95 +2,125 @@
 #include <string>
 #include <vector>
 
-struct Node {
-	Node(std::string key) : _key(key), _nearest(nullptr) {}
+/*
+    каждая ячейка это связный список (для избежания коллизий)
+    последний вставленный элемент является головой списка (т.е. вставка осуществляется в начало списка, а не в конец)
+    т.к. в таком случае не нужно итерироваться по всему списку для обновления указателя next у последнего эл-та
+*/
 
-	std::string _key;
-	Node* _nearest; 
+struct Node {
+    Node(std::string key) : _key(key), _next(nullptr) {}
+
+    std::string _key;
+    Node* _next;
 };
 
 class HashSet {
-public:
-	HashSet() : _array(5, nullptr), _size(0) {}
+public:\
+    /* по дефолту память выделена под 5 элементов, при нехватке памяти, память будет увеличиваться вдвое в методе realloc() */
+    HashSet() : _capacity(5), _array(_capacity, nullptr), _size(0) {}
 
-	~HashSet() {
-		clear();
-	}
+    ~HashSet() {
+        clear();
+    }
 
-	void insert(const std::string& key) {
-		/* аллоцируем новую память с перезаписью имеющихся нод */
-		if (_array.size() == _size) {
-			realloc();
-		}
+    void insert(const std::string& key) {
+        if (_size == _capacity) {
+            realloc();
+        }
 
-		int index = hashFunc(key) % _array.size();
-		Node* current = _array[index];
+        int index = hashFunc(key) % _capacity;
+        Node* current = _array[index]; /* нода по текущему индексу, если там ничего нет будет nullptr */
 
-		while (current) {
-			if (current->_key == key) {
-				return; /* ключи совпали */
-			}
-			current = current->_nearest;
-		}
+        while (current) {
+            if (current->_key == key) {
+                return; /* такой элемент уже есть в сете */
+            }
+            current = current->_next;
+        }
 
-		Node* newNode = new Node(key);
-		/* 
-			новую ноду добавляем в начало списка, если бакет был пуст, указатель _nearest == nullptr
-			если нет, то он будет указывать на самый первый элемент бакета
-		*/
-		newNode->_nearest = _array[index];
-		/* обновляем первый эл-т бакета на новую ноду */
-		_array[index] = newNode;
+        /* создаем новую ноду, которая будет головой списка в указанном бакете */
+        Node* newNode = new Node(key);
+        /* указатель next новой ноды указывает на предыдущую голову */
+        newNode->_next = _array[index];
+        /* обновляем голову на созданную */
+        _array[index] = newNode;
 
-		++_size;
-	}
+        ++_size;
+    }
 
-private:
-	int hashFunc(const std::string& key) {
-		int index{ 0 };
-		for (int i = 0; i < key.size(); ++i) {
-			index += static_cast<int>(key[i]) * (i + 1); /* домножение на индекс, чтобы было меньше коллизий */
-		}
-
-		return index;
-	}
-
-	void realloc() {
-		size_t newCapacity = _array.size() * 2;
-		std::vector<Node*>newArray(newCapacity, nullptr);
-
-		/* т.к. размер массива изменился, все ноды нужно пересчитать (бакеты будут отличаться от предыдущих из-за нового размера) */
-		for (int i = 0; i < _array.size(); ++i) {
-			Node* current = _array[i];
-			/* разместить текущую ноду в новом массиве, в случае если у нее есть соседи, повторить процедуру для них */
-			while (current) {
-				int index = hashFunc(current->_key) % newCapacity;
-
-				/* тоже самое что и в insert */
-				Node* tmp = new Node(current->_key);
-				tmp->_nearest = newArray[index];
-				newArray[index] = tmp;
-
-				current = current->_nearest;
-			}
-		}
-
-		clear();
-		_array = std::move(newArray);
-	}
-
-	void clear() {
-		for (auto node : _array) {
-			while (node) {
-				Node* tmp = node->_nearest;
-				delete node;
-				node = tmp;
-			}
-		}
-		_array.clear();
-	}
+    void print() {
+        for (auto node : _array) {
+            while (node) {
+                std::cout << node->_key << " ";
+                node = node->_next;
+            }
+            std::cout << std::endl;
+        }
+    }
 
 private:
-	std::vector<Node*>_array;
-	size_t _size; /* кол-во эл-ов */
+    int hashFunc(const std::string& key) {
+        int index{ 0 };
+        for (int i = 0; i < key.size(); ++i) {
+            index += static_cast<int>(key[i]) * (i + 1); /* домножаем на индекс для избежания коллизий */
+        }
+
+        return index;
+    }
+
+    void realloc() {
+        /* увеличиваем емкость в 2 раза */
+        int newCapacity = _capacity * 2;
+        std::vector<Node*> newArray(newCapacity, nullptr);
+
+        for (int i = 0; i < _capacity; ++i) {
+            Node* current = _array[i];
+            while (current) {
+                /* генерируем индекс в новом массиве */
+                int index = hashFunc(current->_key) % newCapacity;
+
+                Node* newNode = new Node(current->_key);
+                newNode->_next = newArray[index];
+                newArray[index] = newNode;
+
+                /* освобождаем память предыдущего массива */
+                Node* tmp = current;
+                current = current->_next;
+                delete tmp; 
+            }
+        }
+
+        _array = newArray;
+        _capacity = newCapacity;
+    }
+
+    void clear() {
+        for (auto node : _array) {
+            while (node) {
+                Node* tmp = node->_next;
+                delete node;
+                node = tmp;
+            }
+        }
+    }
+
+private:
+    size_t _capacity; /* текущая емкость массива */
+    std::vector<Node*> _array;
+    size_t _size; /* кол-во фактических элементов */
 };
+
+int main()
+{
+    HashSet set;
+    set.insert("John");
+    set.insert("Michael");
+    set.insert("Sam");
+    set.insert("Mary");
+    set.insert("Tom");
+
+    set.print();
+
+    return 0;
+}
