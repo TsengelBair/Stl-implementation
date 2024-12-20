@@ -73,6 +73,31 @@ public:
         return nullptr;
     }
 
+    void erase(const std::string& key) {
+        int index = hashFunc(key) % _capacity;
+        /* получаем нужную ноду */
+        Node* current = _array[index];
+        Node* prev = nullptr;
+
+        while (current) {
+            if (current->_key == key) {
+                if (prev) {
+                    prev->_next = current->_next;
+                }
+                else {
+                    _array[index] = current->_next;
+                }
+
+                delete current;
+                --_size;
+                return;
+            }
+
+            prev = current;
+            current = current->_next;
+        }
+    }
+
 private:
     int hashFunc(const std::string& key) {
         int index{ 0 };
@@ -124,18 +149,3 @@ private:
     std::vector<Node*> _array;
     size_t _size; /* кол-во фактических элементов */
 };
-
-int main()
-{
-    HashSet set;
-    set.insert("John");
-    set.insert("Michael");
-    set.insert("Sam");
-    set.insert("Mary");
-    set.insert("Tom");
-
-    Node* res = set.find("John");
-    std::cout << res << std::endl;
-
-    return 0;
-}
