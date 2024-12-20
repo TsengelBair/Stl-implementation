@@ -59,6 +59,20 @@ public:
         }
     }
 
+    Node* find(const std::string& key) {
+        int index = hashFunc(key) % _capacity;
+        Node* current = _array[index];
+
+        while (current) {
+            if (current->_key == key) {
+                return current;
+            }
+            current = current->_next;
+        }
+
+        return nullptr;
+    }
+
 private:
     int hashFunc(const std::string& key) {
         int index{ 0 };
@@ -87,7 +101,7 @@ private:
                 /* освобождаем память предыдущего массива */
                 Node* tmp = current;
                 current = current->_next;
-                delete tmp; 
+                delete tmp;
             }
         }
 
@@ -120,7 +134,8 @@ int main()
     set.insert("Mary");
     set.insert("Tom");
 
-    set.print();
+    Node* res = set.find("John");
+    std::cout << res << std::endl;
 
     return 0;
 }
